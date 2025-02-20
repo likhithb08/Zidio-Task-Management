@@ -1,31 +1,24 @@
 
 import { Router } from "express";
 import autharize from '..//middlewares/auth.middleware.js'
+import { createTask , getUserTasks} from "../controllers/tasks.controller.js";
+import { checkBlacklist } from '../middlewares/checkBlacklist.js';
+import { updateTask, deleteTask } from '../controllers/tasks.controller.js';
 const taskRouter = Router();
 
 taskRouter.get('/', (req, res) => {   
   res.send({message : 'GET , all tasks'});
 });
 
-taskRouter.post('/tasks', autharize ,(req, res) => {  
-    res.send({message : 'POST , create a new task'});
-} );
+taskRouter.post('/tasks', autharize ,createTask );
 
-taskRouter.get('/tasks/:id', (req, res) => {    
-  res.send({message : 'GET , a task'});
-});
+taskRouter.put('/tasks/:id', autharize, checkBlacklist, updateTask);
 
-taskRouter.put('/tasks/:id', (req, res) => {    
-  res.send({message : 'PUT , update a task'});
-});
+taskRouter.get('/tasks/:id', autharize, checkBlacklist, getUserTasks);
 
-taskRouter.delete('/tasks/:id', (req, res) => {    
-  res.send({message : 'Delete a task'});
-});
+taskRouter.delete('/tasks/:id', autharize,deleteTask);
 
-taskRouter.get('/user/:id', (req, res) => { 
-  res.send({message : 'All task of a user '});
-});
+taskRouter.get('/user/:id', autharize ,getUserTasks);
 
 
 export default taskRouter;

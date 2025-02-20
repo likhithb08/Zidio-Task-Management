@@ -19,18 +19,6 @@ app.use('/api/v1/users', userRouter);
 app.use('/api/v1/tasks', taskRouter);
 
 app.use(errorMiddleware);
-// console.log("Registered routes:");
-// app._router.stack.forEach((middleware) => {
-//     if (middleware.route) { // Check if middleware is a route
-//         console.log(middleware.route);
-//     } else if (middleware.name === 'router') { // Handle nested routers
-//         middleware.handle.stack.forEach((nested) => {
-//             if (nested.route) {
-//                 console.log(nested.route);
-//             }
-//         });
-//     }
-// });
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Task Management App');

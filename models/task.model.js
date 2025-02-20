@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import User from "../models/user.model.js";
 
 const taskSchema = new mongoose.Schema({
     name: {
@@ -17,7 +18,7 @@ const taskSchema = new mongoose.Schema({
         enum: ["active", "Completed", "incomplete"],
         default: "active",
     },
-    startDate : {
+    startDate: {
         type: Date,
         default: Date.now,
         required: [true, "Please provide a start date for this task"],
@@ -26,16 +27,16 @@ const taskSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
         required: [true, "Please provide a due date for this task"],
-        validate :{
-            validator : function(dueDate){
+        validate: {
+            validator: function (dueDate) {
                 return this.startDate <= dueDate;
             },
-            message : "Due date must be greater than start date"
-        }
+            message: "Due date must be greater than start date",
+        },
     },
     category: {
         type: String,
-        enum: ["Work", "Hobby", "Game" , "Study", "task" , "Other", "Personal"],
+        enum: ["Work", "Hobby", "Game", "Study", "task", "Other", "Personal"],
         default: "task",
     },
     priority: {
@@ -47,37 +48,54 @@ const taskSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
-    user : {
-        type : mongoose.Schema.ObjectId,
-        ref : "User",
-        required : true,
-        index : true
-    }
+    user: {
+        type: mongoose.Schema.ObjectId,
+        ref: "User",
+        required: true,
+        index: true,
+    },
 });
 
-// taskSchema.index({user : 1, name : 1}, {unique : true});
+// taskSchema.index({ user: 1, name: 1 }, { unique: true });
 
-taskSchema.pre("save", async function(next){
-    if(!this.isModified("user")) return next();
-    try{
+// ✅ Improved 'save' hook to handle undefined and missing user
+taskSchema.pre("save", async function (next) {
+    if (!this.isModified("user")) return next();
+
+    try {
         const user = await User.findById(this.user);
-        user.tasks.push(this._id);
-        await user.save();
+
+        // Handle if the user doesn't exist
+        if (!user) {
+            throw new Error("User not found. Cannot assign task.");
+        }
+
+        // Ensure 'tasks' array is initialized
+        if (!user.tasks) {
+            user.tasks = [];
+        }
+
+        // Avoid duplicate task IDs
+        if (!user.tasks.includes(this._id)) {
+            user.tasks.push(this._id);
+            await user.save();
+        }
+
         next();
-    }catch(err){
-        console.log(err);
+    } catch (err) {
+        console.error("Error in task pre-save hook:", err);
         next(err);
     }
 });
 
-// taskSchema.pre(/^find/, function(next){
-//     this.populate({
-//         path : "user",
-//         select : "name email"
-//     });
-//     next();
-// })
+// Populate 'user' details on all find queries
+taskSchema.pre(/^find/, function (next) {
+    this.populate({
+        path: "user",
+        select: "name email",
+    });
+    next();
+});
 
 const Task = mongoose.model("Task", taskSchema);
-
 export default Task;
