@@ -32,7 +32,7 @@ Zidio Task Management is a web application designed to help users efficiently ma
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/yourusername/Zidio-Task-Management.git
+  (https://github.com/likhithb08/Zidio-Task-Management.git)
    ```
 2. Navigate to the project directory:
    ```sh
