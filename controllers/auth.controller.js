@@ -12,19 +12,30 @@ export const signUp = async (req, res, next) => {
     session.startTransaction();
 
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password ,confirmPassword, role} = req.body;
+
+        console.log("Received data:", req.body);
+
 
 
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             session.endSession();
-            return res.status(400).json({ success: false, message: "User already exists" });
+            const message = existingUser.email === email? "email already exists" : "username already exists"
+            return res.status(400).json({ success: false, message});
+
+        }
+
+        if (password !== confirmPassword) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ success: false, message: "Passwords do not match" });
         }
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const newUser = await User.create([{ username, email, password: hashedPassword }], { session });
+        const newUser = await User.create([{ username, email, password: hashedPassword , confirmPassword : hashedPassword}], { session });
 
 
         // ✅ Corrected _id usage
@@ -101,6 +112,10 @@ export const signOut = async (req, res, next) => {
 
         if (!token) {
             return res.status(401).json({ success: false, message: 'No token provided' });
+        }
+        const isBlacklisted = await BlacklistedToken.exists({token})
+        if(isBlacklisted){
+            return res.status(401).json({success : false , message : "user already signed out!..."})
         }
 
         // Add the token to the blacklist
